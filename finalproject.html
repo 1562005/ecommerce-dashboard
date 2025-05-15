@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-commerce Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #e9eff5, #fefefe);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    h2 {
+      color: #2c3e50;
+      font-weight: 800;
+      text-shadow: 1px 1px 2px #ccc;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .card-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    .btn-secondary {
+      font-size: 0.85rem;
+    }
+    input[type="text"], input[type="number"], input[type="file"] {
+      border-radius: 0.5rem;
+    }
+    #searchInput {
+      max-width: 300px;
+    }
+    .low-stock {
+      color: red;
+      font-weight: bold;
+    }
+    table th {
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+    }
+    .table td, .table th {
+      vertical-align: middle;
+    }
+    form input, form button {
+      border-radius: 0.5rem;
+    }
+    form {
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <h2 class="mb-4 text-center">🚀 E-commerce Admin Dashboard</h2>
+
+    <!-- Revenue Summary -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card text-white bg-primary">
+          <div class="card-body text-center">
+            <h5 class="card-title">Total Orders</h5>
+            <p class="card-text" id="total-orders">120</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card text-white bg-success">
+          <div class="card-body text-center">
+            <h5 class="card-title">Total Sales (USD)</h5>
+            <p class="card-text" id="total-sales">$9,800</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trends</h5>
+        <canvas id="revenueChart" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- Inventory Management -->
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-box"></i> Inventory Management</h5>
+        <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Search Product">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Product Registration Form -->
+    <div class="card mt-4 mb-5">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-plus-circle"></i> Add New Product</h5>
+        <form id="productForm">
+          <input type="text" id="productName" class="form-control mb-2" placeholder="Product Name" required>
+          <input type="text" id="productDesc" class="form-control mb-2" placeholder="Description" required>
+          <input type="number" id="productPrice" class="form-control mb-2" placeholder="Price" required>
+          <input type="number" id="productStock" class="form-control mb-2" placeholder="Initial Stock" required>
+          <input type="file" id="productImage" class="form-control mb-3">
+          <button class="btn btn-primary w-100" type="submit">Add Product</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const products = [
+      { name: "Amazon Echo Dot", desc: "Smart speaker with Alexa", price: 50, stock: 8 },
+      { name: "Walmart TV", desc: "42-inch Smart LED TV", price: 250, stock: 3 },
+      { name: "Amazon Fire Stick", desc: "Streaming device", price: 30, stock: 15 }
+    ];
+
+    function renderInventory() {
+      const table = document.getElementById("inventoryTable");
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      table.innerHTML = "";
+
+      products.filter(p => p.name.toLowerCase().includes(search)).forEach((product, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${product.name}</td>
+          <td>${product.desc}</td>
+          <td>$${product.price}</td>
+          <td class="${product.stock < 5 ? 'low-stock' : ''}">${product.stock}</td>
+          <td><button class="btn btn-sm btn-outline-primary" onclick="updateStock(${index})">+5 Stock</button></td>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    function updateStock(index) {
+      products[index].stock += 5;
+      renderInventory();
+    }
+
+    document.getElementById("productForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("productName").value;
+      const desc = document.getElementById("productDesc").value;
+      const price = parseFloat(document.getElementById("productPrice").value);
+      const stock = parseInt(document.getElementById("productStock").value);
+      products.push({ name, desc, price, stock });
+      this.reset();
+      renderInventory();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", renderInventory);
+
+    // Chart.js Revenue Trend Chart
+    const ctx = document.getElementById("revenueChart").getContext("2d");
+    const revenueChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+        datasets: [
+          {
+            label: 'Amazon',
+            data: [2000, 2400, 2800, 2600, 3000],
+            borderColor: 'blue',
+            backgroundColor: 'rgba(0,0,255,0.1)',
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Walmart',
+            data: [1500, 1800, 1700, 1900, 2100],
+            borderColor: 'green',
+            backgroundColor: 'rgba(0,255,0,0.1)',
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+    });
+
+    // Initial rendering
+    renderInventory();
+  </script>
+</body>
+</html>
